@@ -1,47 +1,47 @@
--- Verkrijg toegang tot het zwaardmodel en zijn onderdelen
-local sword = workspace:WaitForChild("Sword") -- Zorg ervoor dat dit het juiste model is
-local handle = sword:WaitForChild("Handle")
-local damageRadius = 10 -- Straal waarin de schade wordt toegepast
-local damageAmount = 100 -- Hoeveelheid schade die wordt toegebracht
+-- URL van het externe script
+local url = "https://raw.githubusercontent.com/lionv56/danagai-/main/dangai%20script"
 
--- Functie om een regio te creëren rondom het zwaard
-local function createRegion()
-    return Region3.new(
-        handle.Position - Vector3.new(damageRadius, damageRadius, damageRadius),
-        handle.Position + Vector3.new(damageRadius, damageRadius, damageRadius)
-    )
+-- Functie om een extern script op te halen
+local function getScriptContent(url)
+    local success, result = pcall(function()
+        return game:HttpGet(url)
+    end)
+    return success, result
 end
 
--- Functie om schade toe te passen aan alles in de regio
-local function applyDamage()
-    local region = createRegion()
-    local partsInRegion = workspace:FindPartsInRegion3(region, nil, math.huge)
-
-    for _, part in ipairs(partsInRegion) do
-        local humanoid = part.Parent:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid:TakeDamage(damageAmount)
-        end
+-- Functie om een script uit te voeren
+local function executeScript(scriptContent)
+    local success, err = pcall(function()
+        loadstring(scriptContent)()
+    end)
+    if not success then
+        print("Fout bij uitvoeren van het script: " .. err)
+    else
+        print("Script succesvol uitgevoerd")
     end
 end
 
--- Voeg een aura toe aan het zwaard
-local function createAura()
-    local aura = Instance.new("ParticleEmitter")
-    aura.Color = Color3.fromRGB(255, 0, 0) -- Rood aura
-    aura.Size = NumberSequence.new(1, 5) -- Begin- en eindgrootte van de deeltjes
-    aura.Lifetime = NumberRange.new(1, 1) -- Levensduur van de deeltjes
-    aura.Rate = 10 -- Hoeveelheid deeltjes per seconde
-    aura.Parent = handle -- Voeg de aura toe aan het handvat van het zwaard
+-- Haal het script op
+local success, scriptContent = getScriptContent(url)
+
+if success then
+    print("Script succesvol opgehaald")
+    -- Toon de eerste paar regels van de inhoud voor controle
+    print("Script inhoud (eerste 500 tekens):")
+    print(scriptContent:sub(1, 500))  -- Print de eerste 500 tekens van de inhoud voor overzichtelijkheid
+
+    -- Voer het script uit als het succesvol is opgehaald
+    executeScript(scriptContent)
+
+    -- Extra debuggen: controleer of bepaalde functies zijn geladen
+    local success, testFunction = pcall(function()
+        return loadstring(scriptContent)()
+    end)
+    if success then
+        print("Script functies geladen")
+    else
+        print("Fout bij laden van script functies: " .. testFunction)
+    end
+else
+    print("Fout bij ophalen van het script: " .. scriptContent)
 end
-
--- Functie die wordt aangeroepen bij aanraking
-local function onTouched(otherPart)
-    applyDamage()
-end
-
--- Koppel de aanrakingen aan de functie
-handle.Touched:Connect(onTouched)
-
--- Maak de aura van het zwaard
-createAura()
