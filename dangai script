@@ -1,0 +1,47 @@
+-- Verkrijg toegang tot het zwaardmodel en zijn onderdelen
+local sword = workspace:WaitForChild("Sword") -- Zorg ervoor dat dit het juiste model is
+local handle = sword:WaitForChild("Handle")
+local damageRadius = 10 -- Straal waarin de schade wordt toegepast
+local damageAmount = 100 -- Hoeveelheid schade die wordt toegebracht
+
+-- Functie om een regio te creëren rondom het zwaard
+local function createRegion()
+    return Region3.new(
+        handle.Position - Vector3.new(damageRadius, damageRadius, damageRadius),
+        handle.Position + Vector3.new(damageRadius, damageRadius, damageRadius)
+    )
+end
+
+-- Functie om schade toe te passen aan alles in de regio
+local function applyDamage()
+    local region = createRegion()
+    local partsInRegion = workspace:FindPartsInRegion3(region, nil, math.huge)
+
+    for _, part in ipairs(partsInRegion) do
+        local humanoid = part.Parent:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:TakeDamage(damageAmount)
+        end
+    end
+end
+
+-- Voeg een aura toe aan het zwaard
+local function createAura()
+    local aura = Instance.new("ParticleEmitter")
+    aura.Color = Color3.fromRGB(255, 0, 0) -- Rood aura
+    aura.Size = NumberSequence.new(1, 5) -- Begin- en eindgrootte van de deeltjes
+    aura.Lifetime = NumberRange.new(1, 1) -- Levensduur van de deeltjes
+    aura.Rate = 10 -- Hoeveelheid deeltjes per seconde
+    aura.Parent = handle -- Voeg de aura toe aan het handvat van het zwaard
+end
+
+-- Functie die wordt aangeroepen bij aanraking
+local function onTouched(otherPart)
+    applyDamage()
+end
+
+-- Koppel de aanrakingen aan de functie
+handle.Touched:Connect(onTouched)
+
+-- Maak de aura van het zwaard
+createAura()
